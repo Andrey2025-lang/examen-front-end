@@ -10,7 +10,7 @@ const Contact = () => {
           </h2>
           <div className="w-24 h-1 bg-primary mx-auto mb-8 rounded-full" />
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Si desea más información sobre nuestras investigaciones o proyectos
+            Si desea más información sobre nuestros proyectos o investigaciones
             en ciberseguridad, puede escribirnos a:
           </p>
         </div>
