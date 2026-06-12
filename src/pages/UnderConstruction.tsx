@@ -1,27 +1,30 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, ShieldAlert, AlertTriangle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Send, ShieldAlert, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import heroImage from "@/assets/hero-cyber.jpg";
 
 const UnderConstruction = () => {
-  //Estados locales
+  // Estados locales para los inputs
   const [impostorDetails, setImpostorDetails] = useState("");
   const [contactInfo, setContactInfo] = useState("");
   const [comments, setComments] = useState("");
 
-  // Estados para el manejo de alertas visuales
+  // Estados para el manejo de alertas visuales y de red
   const [validationError, setValidationError] = useState("");
   const [isLocalSuccess, setIsLocalSuccess] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
+    setServerError("");
     setIsLocalSuccess(false);
 
-    //Validación básica para evitar envíos vacíos
+    // Validación básica para evitar envíos vacíos
     if (!impostorDetails.trim()) {
       setValidationError("El nombre o entidad del impostor es obligatorio.");
       return;
@@ -35,7 +38,40 @@ const UnderConstruction = () => {
       return;
     }
 
-    setIsLocalSuccess(true);
+    // Encendemos el estado de carga
+    setIsLoading(true);
+
+    try {
+      // Consumo del endpoint POST usando
+      const response = await fetch("https://localhost:7098/api/Fraud", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: 0,
+          impostorDetails: impostorDetails,
+          contactInfo: contactInfo,
+          comments: comments,
+          createdAt: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        // Indicamos éxito real al usuario
+        setIsLocalSuccess(true);
+        setImpostorDetails("");
+        setContactInfo("");
+        setComments("");
+      } else {
+        throw new Error("El servidor no pudo procesar el reporte.");
+      }
+    } catch (error) {
+      // Mensaje de error controlado
+      setServerError("No se pudo conectar con el Backend. Verifique que su API .NET esté corriendo.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,7 +95,7 @@ const UnderConstruction = () => {
               </h1>
             </div>
 
-            {/* Alerta de error de validación */}
+            {/* Mensaje de error de validación local */}
             {validationError && (
               <div className="mb-6 flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
@@ -67,11 +103,19 @@ const UnderConstruction = () => {
               </div>
             )}
 
-            {/* Alerta de éxito local */}
+            {/* Mensaje de error de conexión con la API */}
+            {serverError && (
+              <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                <p className="text-sm font-medium">{serverError}</p>
+              </div>
+            )}
+
+            {/* Mensaje de éxito real */}
             {isLocalSuccess && (
               <div className="mb-6 flex items-center gap-3 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl">
                 <CheckCircle className="w-5 h-5 shrink-0" />
-                <p className="text-sm font-medium">Formulario validado correctamente (Listo para conectar al Backend).</p>
+                <p className="text-sm font-medium">¡Reporte enviado y guardado exitosamente en el sistema!</p>
               </div>
             )}
 
@@ -84,10 +128,11 @@ const UnderConstruction = () => {
                 </label>
                 <input
                   type="text"
+                  disabled={isLoading}
                   value={impostorDetails}
                   onChange={(e) => setImpostorDetails(e.target.value)}
                   placeholder="Ej: Juan Pérez o Banco Falso"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 />
               </div>
 
@@ -97,10 +142,11 @@ const UnderConstruction = () => {
                 </label>
                 <input
                   type="text"
+                  disabled={isLoading}
                   value={contactInfo}
                   onChange={(e) => setContactInfo(e.target.value)}
                   placeholder="Ej: 11111111, correo@falso.com"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 />
               </div>
 
@@ -110,21 +156,32 @@ const UnderConstruction = () => {
                   Describa lo que ocurrió con el mayor detalle posible.
                 </p>
                 <textarea
+                  disabled={isLoading}
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   placeholder="Escriba los detalles del incidente..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:opacity-50"
                 />
               </div>
 
               <div className="pt-4 flex flex-col sm:flex-row gap-3">
                 <button
                   type="submit"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md"
+                  disabled={isLoading}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-xl transition-all shadow-md"
                 >
-                  <Send className="w-5 h-5" />
-                  Validar Enviar
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Enviando reporte...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Enviar Reporte Real
+                    </>
+                  )}
                 </button>
 
                 <Link
