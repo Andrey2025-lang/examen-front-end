@@ -43,7 +43,7 @@ const UnderConstruction = () => {
 
     try {
       // Consumo del endpoint POST usando
-      const response = await fetch("https://localhost:7098/api/Fraud", {
+      const response = await fetch("https://examen-backend-production-b0cc.up.railway.app/api/Fraud", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

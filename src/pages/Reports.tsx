@@ -21,7 +21,7 @@ const Reports = () => {
 
   const fetchReports = async () => {
     try {
-      const response = await fetch("https://localhost:7098/api/Fraud");
+      const response = await fetch("https://examen-backend-production-b0cc.up.railway.app/api/Fraud");
       
       if (!response.ok) {
         throw new Error("No se pudo obtener la información del servidor.");
